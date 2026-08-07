@@ -2,76 +2,205 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Painel de Atendimento - Hospital Dia EBSERH</title>
+    <title>Painel de Atendimento - EBSERH</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --success: #10b981; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; }
+        :root { 
+            --ebserh-blue: #003865; 
+            --ebserh-green: #00a859; 
+            --ebserh-green-hover: #008d4a;
+            --bg: #f0f4f8; 
+            --card-bg: #ffffff;
+            --text-dark: #0f172a;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+
+        .header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            width: 100%; 
+            max-width: 500px; 
+            margin-bottom: 10px; 
+        }
+
+        .brand-pill {
+            background: var(--ebserh-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,56,101,0.15);
+        }
         
-        .card { background: white; width: 100%; max-width: 500px; padding: 35px; border-radius: 35px; box-shadow: 0 20px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); margin-top: 20px; }
-        
-        .header { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 500px; margin-bottom: 10px; }
-        .user-badge { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .card { 
+            background: var(--card-bg); 
+            width: 100%; 
+            max-width: 500px; 
+            padding: 35px; 
+            border-radius: 30px; 
+            box-shadow: 0 15px 35px rgba(0, 56, 101, 0.08); 
+            border: 1px solid rgba(0, 56, 101, 0.08); 
+            margin-top: 15px; 
+            box-sizing: border-box;
+        }
         
         .grid-salas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn-sala { padding: 20px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; font-weight: 700; text-align: center; transition: 0.3s; }
-        .btn-sala:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+        .btn-sala { 
+            padding: 20px; 
+            background: #f8fafc; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            text-align: center; 
+            color: var(--ebserh-blue);
+            transition: 0.3s; 
+        }
+        .btn-sala:hover { 
+            border-color: var(--ebserh-green); 
+            color: var(--ebserh-green); 
+            background: #f0fdf4; 
+        }
 
         .input-paciente { 
-            width: 100%; padding: 20px; border-radius: 20px; border: 2px solid #f1f5f9; 
-            font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; 
-            outline: none; transition: 0.3s; text-transform: uppercase;
-            box-sizing: border-box; display: block;
+            width: 100%; 
+            padding: 20px; 
+            border-radius: 20px; 
+            border: 2px solid #cbd5e1; 
+            font-size: 1.4rem; 
+            font-weight: 800; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            outline: none; 
+            transition: 0.3s; 
+            text-transform: uppercase;
+            box-sizing: border-box; 
+            display: block;
+            color: var(--ebserh-blue);
         }
 
         .input-paciente:focus { 
-            border-color: var(--accent); 
+            border-color: var(--ebserh-green); 
             background-color: #fff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 168, 89, 0.15);
         }
 
-        .btn-chamar { width: 100%; padding: 22px; background: var(--primary); color: white; border: none; border-radius: 22px; font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-chamar { 
+            width: 100%; 
+            padding: 22px; 
+            background: var(--ebserh-green); 
+            color: white; 
+            border: none; 
+            border-radius: 20px; 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            box-shadow: 0 8px 20px rgba(0, 168, 89, 0.25);
+        }
+        .btn-chamar:hover { background: var(--ebserh-green-hover); }
         .btn-chamar:active { transform: scale(0.98); }
         
-        #success-check { color: var(--success); display: none; align-items: center; gap: 5px; font-weight: 800; margin-top: 10px; animation: bounce 0.5s ease; }
+        #success-check { 
+            color: var(--ebserh-green); 
+            display: none; 
+            align-items: center; 
+            justify-content: center;
+            gap: 5px; 
+            font-weight: 800; 
+            margin-top: 15px; 
+            animation: bounce 0.5s ease; 
+        }
 
-        .hist-title { font-size: 0.9rem; font-weight: 800; color: #94a3b8; margin: 30px 0 15px; letter-spacing: 1px; text-transform: uppercase; }
-        .hist-item { background: #f8fafc; padding: 15px 20px; border-radius: 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
-        .hist-info b { font-size: 1.1rem; color: var(--primary); display: block; }
-        .hist-info small { color: #64748b; }
-        .btn-rechamada { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+        .hist-title { font-size: 0.85rem; font-weight: 800; color: #64748b; margin: 30px 0 15px; letter-spacing: 1px; text-transform: uppercase; }
+        .hist-item { 
+            background: #f8fafc; 
+            padding: 15px 20px; 
+            border-radius: 18px; 
+            margin-bottom: 10px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #e2e8f0; 
+        }
+        .hist-info b { font-size: 1.05rem; color: var(--ebserh-blue); display: block; }
+        .hist-info small { color: #64748b; font-weight: 600; }
+        
+        .btn-rechamada { 
+            background: var(--ebserh-blue); 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-size: 0.8rem; 
+            transition: 0.2s;
+        }
+        .btn-rechamada:hover { background: #002849; }
 
         .hidden { display: none !important; }
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-        footer { width: 100%; max-width: 500px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; margin-bottom: 20px; }
-        .signature { margin: 0; font-size: 0.7rem; color: #94a3b8; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        footer { 
+            width: 100%; 
+            max-width: 500px; 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #cbd5e1; 
+            text-align: center; 
+            margin-bottom: 20px; 
+        }
+        .signature { margin: 0; font-size: 0.7rem; color: #64748b; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="user-badge">
-            <span class="material-symbols-rounded" style="color:var(--accent)">account_circle</span>
+        <div class="brand-pill">
+            <span class="material-symbols-rounded">account_circle</span>
             <span id="prof-nome">Profissional</span>
         </div>
-        <button onclick="location.href='index.html'" style="border:none; background:none; color:#ef4444; font-weight:800; cursor:pointer;">Sair</button>
+        <button onclick="location.href='index.html'" style="border:none; background:none; color:#ef4444; font-weight:800; cursor:pointer; font-size:0.9rem;">Sair</button>
     </div>
 
     <div class="card" id="step-salas">
-        <h2 style="margin:0; font-weight:800;">Onde você está?</h2>
-        <p style="color:#64748b; margin-top:5px;" id="unidade-label">Hospital Dia EBSERH</p>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+            <span style="background:var(--ebserh-green); color:white; padding:2px 8px; border-radius:6px; font-size:0.7rem; font-weight:800;">EBSERH</span>
+            <h2 style="margin:0; font-weight:800; color:var(--ebserh-blue);">Onde você está?</h2>
+        </div>
+        <p style="color:#64748b; margin-top:5px; font-weight:600;" id="unidade-label">Hospital Dia EBSERH</p>
         <div class="grid-salas" id="lista-salas"></div>
     </div>
 
     <div class="card hidden" id="step-chamada">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <b id="sala-ativa" style="color:var(--accent); font-size:1.2rem;">SALA</b>
-            <a onclick="location.reload()" style="cursor:pointer; font-size:0.8rem; color:#94a3b8; font-weight:700;">Trocar sala</a>
+            <b id="sala-ativa" style="color:var(--ebserh-blue); font-size:1.2rem; font-weight:800;">SALA</b>
+            <a onclick="location.reload()" style="cursor:pointer; font-size:0.85rem; color:var(--ebserh-green); font-weight:800;">Trocar sala</a>
         </div>
         
         <input type="text" id="paciente" class="input-paciente" placeholder="NOME DO PACIENTE" autocomplete="off">
@@ -91,8 +220,8 @@
 
     <footer>
         <p class="signature">
-            Tecnologia Integrada <span style="color: #3b82f6;">●</span> 
-            <span style="color: #0f172a;">Lucas Freitas Gomes</span> © 2026
+            Hospital Dia EBSERH <span style="color: var(--ebserh-green);">●</span> 
+            <span style="color: var(--ebserh-blue);">Lucas Freitas Gomes</span> © 2026
         </p>
     </footer>
 
@@ -105,46 +234,6 @@
             "Enfermeiro": ["Triagem 01", "Triagem 02", "Acolhimento"],
             "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação", "Procedimentos"],
             "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação", "Procedimentos"]            
-        },
-        "aero": { 
-            "Médica": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
-            "Médico": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"],
-            "Enfermeira": ["Triagem 01", "Triagem 02"],
-            "Enfermeiro": ["Triagem 01", "Triagem 02"],
-            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
-            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
-        },
-        "tira": { 
-            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
-            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
-            "Enfermeira": ["Triagem 01", "Triagem 02"], 
-            "Enfermeiro": ["Triagem 01", "Triagem 02"],
-            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
-            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]            
-        },
-        "leblon": { 
-            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
-            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
-            "Enfermeira": ["Triagem 01", "Triagem 02"], 
-            "Enfermeiro": ["Triagem 01", "Triagem 02"],
-            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
-            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]            
-        },
-        "uni": { 
-            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8", "Consultório 9", "Consultório 10"], 
-            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8", "Consultório 9", "Consultório 10"], 
-            "Enfermeira": ["Classificação de risco 01", "Classificação de risco 02"], 
-            "Enfermeiro": ["Classificação de risco 01", "Classificação de risco 02"],
-            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
-            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
-        },
-        "nb": { 
-            "Médica": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
-            "Médico": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
-            "Enfermeira": ["Triagem 01", "Triagem 02"], 
-            "Enfermeiro": ["Triagem 01", "Triagem 02"],
-            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
-            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
         }
     };
 
@@ -174,7 +263,7 @@
     let salaSelecionada = "";
     let hist = [];
 
-    const salasDaUnidade = SALAS[uID] ? SALAS[uID][pCargo] : ["Consultório 01", "Consultório 02", "Triagem 01", "Procedimentos"];
+    const salasDaUnidade = (SALAS[uID] && SALAS[uID][pCargo]) ? SALAS[uID][pCargo] : ["Consultório 01", "Consultório 02", "Triagem 01", "Procedimentos"];
     document.getElementById('lista-salas').innerHTML = salasDaUnidade.map(s => 
         `<div class="btn-sala" onclick="selecionarSala('${s}')">${s}</div>`
     ).join('');
