@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TV Recepção - Hospital Dia EBSERH</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #020617; --accent: #facc15; --text: #f8fafc; --card-bg: #0f172a; }
+        body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--primary); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        
+        #bloqueio-som { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .btn-ativar { padding: 30px 60px; background: var(--accent); color: var(--primary); border: none; border-radius: 30px; font-size: 2rem; font-weight: 800; cursor: pointer; }
+
+        header { background: rgba(15, 23, 42, 0.95); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--accent); }
+        .relogio { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+
+        .main-content { flex: 1; display: flex; overflow: hidden; }
+        
+        .chamada-foco { flex: 3; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); transition: all 0.5s ease; position: relative; padding: 20px; text-align: center; }
+               
+        #senha-atual { 
+            font-size: clamp(3rem, 12vw, 15vw); 
+            font-weight: 800; 
+            color: #fff; 
+            line-height: 1; 
+            width: 90%; 
+            margin: 0 auto;
+            transition: 0.3s; 
+            word-wrap: break-word; 
+            overflow-wrap: break-word;
+            display: block; 
+            text-align: center;    
+        }
+        
+        #local-atual { 
+            font-size: clamp(2rem, 5vw, 6vw); 
+            color: var(--accent); 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            margin-top: 20px; 
+        }
+
+        .modo-espera #senha-atual { 
+            font-size: clamp(2.5rem, 6vw, 7vw); 
+            color: var(--accent); 
+            opacity: 0.8; 
+        }
+        .modo-espera #local-atual { display: none; }
+        .modo-espera #txt-status { font-size: 1.5rem; color: #64748b; margin-bottom: 20px; }
+
+        .historico { flex: 1; background: rgba(0,0,0,0.3); padding: 30px; display: flex; flex-direction: column; gap: 15px; border-left: 1px solid rgba(255,255,255,0.1); }
+        .hist-title { font-size: 1.2rem; font-weight: 800; color: #64748b; margin-bottom: 10px; text-transform: uppercase; }
+        .hist-item { background: var(--card-bg); padding: 15px; border-radius: 18px; border-left: 6px solid var(--accent); animation: slideIn 0.5s ease; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+        footer { background: #e11d48; height: 60px; display: flex; align-items: center; position: relative; overflow: hidden; }
+        .marquee-text { display: inline-block; font-size: 1.8rem; font-weight: 800; color: white; white-space: nowrap; padding-left: 100%; animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+    </style>
+</head>
+<body>
+
+    <div id="bloqueio-som" onclick="iniciarTV()"><button class="btn-ativar">ATIVAR SOM E INICIAR</button></div>
+
+    <header>
+        <div class="logo-area">
+            <h1 id="unidade-nome" style="margin:0">Hospital Dia</h1>
+            <p style="color:#94a3b8;margin:0; font-weight: 700;">HOSPITAL DIA - EBSERH</p>
+        </div>
+        <div class="relogio" id="relogio">00:00:00</div>
+    </header>
+
+    <div class="main-content">
+        <div class="chamada-foco" id="area-foco">
+            <div id="txt-status" style="font-weight: 800;">AGUARDE</div>
+            <div id="senha-atual">SINCRONIZANDO...</div>
+            <div id="local-atual">---</div>
+        </div>
+
+        <div class="historico">
+            <div class="hist-title">Últimos Chamados</div>
+            <div id="lista-historico"></div>
+        </div>
+    </div>
+
+    <footer style="background: #e11d48; height: 60px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
+        <div class="marquee-text" id="marquee-txt">Bem-vindo(a)! Sua saúde é nossa prioridade. • Mantenha seus documentos em mãos • Atendimento prioritário para idosos e gestantes.</div>
+        <div style="position: absolute; right: 20px; bottom: 5px; font-size: 0.6rem; color: rgba(255,255,255,0.6); font-weight: 800; letter-spacing: 1px;">
+            DESENVOLVIDO POR LUCAS FREITAS GOMES © 2026
+        </div>
+    </footer>
+
+<script>
+    // --- DESPERTADOR DE VOZES ---
+    window.speechSynthesis.getVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+    }
+
+    const uID = sessionStorage.getItem('u_id') || 'hd';
+    const uNome = sessionStorage.getItem('u_nome');
+    document.getElementById('unidade-nome').innerText = uNome || "Hospital Dia";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDCTpjqpW5YVocJUAyEp_09wczZ7Hacsg0",
+        authDomain: "hospital-dia-936aa.firebaseapp.com",
+        databaseURL: "https://hospital-dia-936aa-default-rtdb.firebaseio.com",
+        projectId: "hospital-dia-936aa",
+        storageBucket: "hospital-dia-936aa.firebasestorage.app",
+        messagingSenderId: "286443531747",
+        appId: "1:286443531747:web:1e8659b12f1c36f5c104d6",
+        measurementId: "G-3CZ3Q0F1HX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let fila = [], processando = false, historico = [], timeoutEspera;
+    const horaLigouTV = Date.now();
+
+    const informativos = [
+        "AGUARDE SEU NOME NA TELA",
+        "ESTEJA COM O CARTÃO DO SUS E DOCUMENTO COM FOTO",
+        "MANTENHA O SILÊNCIO NA RECEPÇÃO",
+        "Beba água! Hidratação é essencial para o corpo.",
+        "Combate à Dengue: Não deixe água parada no seu quintal."
+    ];
+    let indexInfo = 0;
+
+    function aplicarLGPD(textoOriginal) {
+        if (!textoOriginal) return "";
+        let textoLimpo = textoOriginal.trim();
+        
+        if (textoLimpo.toUpperCase().includes("SENHA") || !textoLimpo.includes(" ")) {
+            return textoLimpo;
+        }
+
+        let partes = textoLimpo.split(/\s+/);
+        if (partes.length <= 1) return textoLimpo;
+
+        let primeiroNome = partes[0];
+        let sobrenomesAbreviados = partes.slice(1).map(sobrenome => {
+            if (/^(de|da|do|dos|das|e)$/i.test(sobrenome)) {
+                return sobrenome.toLowerCase();
+            }
+            return sobrenome.charAt(0).toUpperCase() + ".";
+        }).join(" ");
+
+        return `${primeiroNome} ${sobrenomesAbreviados}`;
+    }
+
+    function iniciarTV() {
+        document.getElementById('bloqueio-som').style.display = 'none';
+        iniciarModoEspera();
+
+        db.ref(uID + '/chamada').on('value', snap => {
+            const d = snap.val();
+            if (d && d.time > horaLigouTV && (!fila.length || fila[fila.length-1].time !== d.time)) {
+                fila.push(d);
+                if(!processando) processarFila();
+            }
+        });
+    }
+
+    async function processarFila() {
+        if (fila.length === 0) return;
+        processando = true;
+        clearTimeout(timeoutEspera);
+        
+        const c = fila.shift();
+        new Audio('https://assets.mixkit.co/active_storage/sfx/2861/2861-preview.mp3').play();
+
+        document.getElementById('area-foco').classList.remove('modo-espera');
+        document.getElementById('txt-status').innerText = "PACIENTE";
+        
+        const nomeFormatadoTela = aplicarLGPD(c.senha);
+        
+        const elSenha = document.getElementById('senha-atual');
+        elSenha.innerText = nomeFormatadoTela;
+        
+        const tamanhoTexto = nomeFormatadoTela.length;
+        if (tamanhoTexto > 30) {
+            elSenha.style.fontSize = 'clamp(2rem, 5vw, 6vw)';
+        } else if (tamanhoTexto > 20) {
+            elSenha.style.fontSize = 'clamp(2.5rem, 7vw, 9vw)';
+        } else if (tamanhoTexto > 12) {
+            elSenha.style.fontSize = 'clamp(3.5rem, 9vw, 11vw)';
+        } else {
+            elSenha.style.fontSize = ''; 
+        }
+        
+        document.getElementById('local-atual').innerText = c.consultorio;
+
+        function getPreposicao(local) {
+            const l = local.toLowerCase();
+            const feminino = ["triagem", "sala", "recepção", "medicação", "sutura", "emergência", "reidratação", "observação", "acolhimento"];
+            return feminino.some(termo => l.includes(termo)) ? "à" : "ao";
+        }
+
+        const preposicao = getPreposicao(c.consultorio);
+        const textoParaFalar = c.senha.replace(/PREF\./gi, "PREFERENCIAL");
+        const mensagem = `Atenção. Paciente, ${textoParaFalar}. Dirija-se ${preposicao} ${c.consultorio}`;
+        
+        const fala = new SpeechSynthesisUtterance(mensagem);
+        const vozes = window.speechSynthesis.getVoices();
+
+        let vozEscolhida = vozes.find(v => 
+            (v.name.includes('Google') || v.name.includes('Antonio') || v.name.includes('Ricardo') || v.name.includes('Daniel')) 
+            && v.lang === 'pt-BR'
+        ) || vozes.find(v => v.lang === 'pt-BR');
+
+        fala.voice = vozEscolhida;
+        fala.lang = 'pt-BR';
+        fala.rate = 1.0;   
+        fala.pitch = 0.8;  
+
+        fala.onend = () => {
+            atualizarHistorico({ senha: nomeFormatadoTela, consultorio: c.consultorio });
+            timeoutEspera = setTimeout(() => iniciarModoEspera(), 4000);
+            processando = false;
+            if (fila.length > 0) processarFila();
+        };
+
+        window.speechSynthesis.speak(fala);
+    }
+
+    function iniciarModoEspera() {
+        if(processando) return;
+        
+        document.getElementById('area-foco').classList.add('modo-espera');
+        document.getElementById('txt-status').innerText = "INFORMATIVO";
+        
+        const elSenha = document.getElementById('senha-atual');
+        const textoInformativo = informativos[indexInfo];
+        elSenha.innerText = textoInformativo;
+
+        const tamanhoAviso = textoInformativo.length;
+        
+        if (tamanhoAviso > 50) {
+            elSenha.style.fontSize = 'clamp(1.5rem, 4vw, 5vw)'; 
+        } else if (tamanhoAviso > 30) {
+            elSenha.style.fontSize = 'clamp(2rem, 5vw, 6vw)';   
+        } else {
+            elSenha.style.fontSize = ''; 
+        }
+
+        indexInfo = (indexInfo + 1) % informativos.length;
+        timeoutEspera = setTimeout(() => iniciarModoEspera(), 6000);
+    }
+
+    function atualizarHistorico(c) {
+        historico.unshift(c);
+        if(historico.length > 5) historico.pop();
+        document.getElementById('lista-historico').innerHTML = historico.map(h => `
+            <div class="hist-item">
+                <b style="font-size:1.6rem;display:block;color:white">${h.senha}</b>
+                <small style="color:var(--accent);font-weight:800; text-transform:uppercase">${h.consultorio}</small>
+            </div>
+        `).join('');
+    }
+
+    setInterval(() => { 
+        document.getElementById('relogio').innerText = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); 
+    }, 1000);
+</script>
+</body>
+</html>
