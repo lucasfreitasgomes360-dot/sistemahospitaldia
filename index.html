@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title> Sistema Integrado de Chamadas - Login </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f8fafc; --error: #ef4444; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .login-card { background: white; width: 100%; max-width: 400px; padding: 45px 35px; border-radius: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.05); text-align: center; border: 1px solid rgba(0,0,0,0.03); animation: fadeIn 0.5s ease; }
+        .icon-box { width: 65px; height: 65px; background: #eff6ff; color: var(--accent); border-radius: 22px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        h1 { font-size: 1.7rem; font-weight: 800; color: var(--primary); margin: 0 0 5px 0; }
+        .sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 30px; font-weight: 600; display: block; }
+        
+        .input-group { margin-bottom: 15px; width: 100%; position: relative; }
+        input { width: 100%; padding: 18px 20px; border-radius: 20px; border: 2px solid #f1f5f9; font-size: 1rem; font-family: inherit; font-weight: 600; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--accent); background: #fff; }
+        
+        .toggle-pass { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; user-select: none; }
+        .toggle-pass:hover { color: var(--accent); }
+
+        .btn-entrar { width: 100%; padding: 20px; background: var(--primary); color: white; border: none; border-radius: 20px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-entrar:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); }
+        
+        .unidade-grid { display: grid; gap: 12px; margin-top: 20px; }
+        .btn-unidade { padding: 20px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; font-weight: 700; color: #475569; transition: 0.3s; }
+        .btn-unidade:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+        
+        .hidden { display: none !important; }
+        .signature { margin-top: 30px; font-size: 0.6rem; font-weight: 800; color: #cbd5e1; letter-spacing: 2px; text-transform: uppercase; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="login-card" id="card-login">
+        <div class="icon-box"><span class="material-symbols-rounded">shield_person</span></div>
+        <h1>Sistema Integrado de Chamadas</h1>
+        <span class="sub">Acesso Identificado - EBSERH</span>
+        
+        <div class="input-group">
+            <input type="text" id="user" placeholder="Usuário">
+        </div>
+        
+        <div class="input-group">
+            <input type="password" id="pass" placeholder="Senha">
+            <span class="material-symbols-rounded toggle-pass" onclick="toggleSenha()">visibility</span>
+        </div>
+        
+        <button class="btn-entrar" onclick="validar()">Acessar Sistema</button>
+        <div id="msg-erro" style="color:var(--error); font-size:0.8rem; margin-top:15px; display:none; font-weight: 700;">Usuário ou senha incorretos.</div>
+        <div class="signature">Designed by Lucas Freitas Gomes © 2026</div>
+    </div>
+
+    <div class="login-card hidden" id="card-unidades">
+        <div class="icon-box" style="background:#fff7ed; color:#f97316;"><span class="material-symbols-rounded">location_on</span></div>
+        <h1 id="welcome">Olá!</h1>
+        <span class="sub">Selecione a unidade de hoje</span>
+        <div class="unidade-grid" id="grid-unidades"></div>
+        <div class="signature">Designed by Lucas Freitas Gomes © 2026</div>
+    </div>
+
+<script>
+    const PROFISSIONAIS = {
+        "lucas.med": { pass: "@2026", nome: "Drº Lucas Freitas Gomes", cargo: "Médico", multi: true, unidades: [{id:"hd", n:"Hospital Dia EBSERH"}, {id:"aero", n:"CRS Aero Rancho"}, {id:"tira", n:"CRS Tiradentes"}, {id:"nb", n:"CRS Nova Bahia"}, {id:"uni", n:"UPA Universitário"}]},
+        "lucasfreitas.med": { pass: "@2026", nome: "Drº Lucas Freitas Gomes", cargo: "Médico", multi: true, unidades: [{id:"hd", n:"Hospital Dia EBSERH"}]},
+        "medicos.med": { pass: "@2026", nome: "Olá, bem-vindo/a tenha um ótimo plantão", cargo: "Médico", multi: true, unidades: [{id:"hd", n:"Hospital Dia EBSERH"}]},
+        "lucas.enf": { pass: "@2026", nome: "Enf. Lucas Freitas", cargo: "Enfermeiro", multi: true, unidades: [{id:"hd", n:"Hospital Dia EBSERH"}]},
+        "lucas.tec": { pass: "@2026", nome: "Tec. Lucas Freitas", cargo: "Técnico de Enf.", multi: true, unidades: [{id:"hd", n:"Hospital Dia EBSERH"}]},
+        "tv.hd": { pass: "@tv2026", nome: "TV Hospital Dia", cargo: "TV", multi: false, id: "hd", un: "Hospital Dia EBSERH", tipo: "tv" },
+        "admin": { pass: "@admin", nome: "Gestor", cargo: "Gerência", multi: true, tipo: "gerencia", unidades: [{id:"hd", n:"Hospital Dia EBSERH"}, {id:"aero", n:"CRS Aero Rancho"}]}
+    };
+
+    function toggleSenha() {
+        const p = document.getElementById('pass');
+        const icon = document.querySelector('.toggle-pass');
+        if(p.type === "password") {
+            p.type = "text";
+            icon.innerText = "visibility_off";
+        } else {
+            p.type = "password";
+            icon.innerText = "visibility";
+        }
+    }
+
+    function validar() {
+        const u = document.getElementById('user').value.toLowerCase().trim();
+        const p = document.getElementById('pass').value;
+        const user = PROFISSIONAIS[u];
+
+        if(user && user.pass === p) {
+            if(user.multi) {
+                document.getElementById('card-login').classList.add('hidden');
+                document.getElementById('card-unidades').classList.remove('hidden');
+                document.getElementById('welcome').innerText = "Olá, " + user.nome.split(' ')[0];
+                
+                document.getElementById('grid-unidades').innerHTML = user.unidades.map(un => 
+                    `<div class="btn-unidade" onclick="entrar('${un.id}','${un.n}','${user.nome}','${user.cargo}', '${user.tipo || "painel"}')">${un.n}</div>`
+                ).join('');
+            } else { 
+                entrar(user.id, user.un, user.nome, user.cargo, user.tipo || "painel"); 
+            }
+        } else { 
+            document.getElementById('msg-erro').style.display="block"; 
+        }
+    }
+
+    function entrar(id, un, nome, cargo, tipo) {
+        sessionStorage.clear();
+        sessionStorage.setItem('logado', 'true');
+        sessionStorage.setItem('u_id', id); 
+        sessionStorage.setItem('u_nome', un);
+        sessionStorage.setItem('p_nome', nome); 
+        sessionStorage.setItem('p_cargo', cargo);
+        
+        if(tipo === "gerencia") {
+            const escolha = confirm("Deseja abrir a TV desta unidade?\n\n[OK] para ver a TV\n[Cancelar] para Gestão");
+            if(escolha) {
+                window.location.href = "tv.html";
+            } else {
+                window.location.href = "gerencia.html";
+            }
+            return;
+        }
+
+        if(tipo === "tv") window.location.href = "tv.html";
+        else window.location.href = "painel.html";
+    }
+</script>
+</body>
+</html>
