@@ -3,61 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <title>TV Recepção - Hospital Dia EBSERH</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #020617; --accent: #facc15; --text: #f8fafc; --card-bg: #0f172a; }
-        body { margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--primary); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
-        
-        #bloqueio-som { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); z-index: 9999; display: flex; justify-content: center; align-items: center; cursor: pointer; }
-        .btn-ativar { padding: 30px 60px; background: var(--accent); color: var(--primary); border: none; border-radius: 30px; font-size: 2rem; font-weight: 800; cursor: pointer; }
+        :root { 
+            --ebserh-blue: #003865; 
+            --ebserh-blue-dark: #002342;
+            --ebserh-green: #00a859; 
+            --ebserh-yellow: #facc15;
+            --card-bg: #002b4e; 
+            --text-light: #f8fafc; 
+        }
 
-        header { background: rgba(15, 23, 42, 0.95); padding: 15px 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--accent); }
-        .relogio { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--ebserh-blue-dark); 
+            color: var(--text-light); 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        #bloqueio-som { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: var(--ebserh-blue-dark); 
+            z-index: 9999; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            cursor: pointer; 
+        }
+        
+        .btn-ativar { 
+            padding: 25px 50px; 
+            background: var(--ebserh-green); 
+            color: white; 
+            border: none; 
+            border-radius: 50px; 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            cursor: pointer; 
+            box-shadow: 0 10px 25px rgba(0, 168, 89, 0.4);
+            transition: 0.3s;
+        }
+        .btn-ativar:hover { transform: scale(1.05); }
+
+        header { 
+            background: var(--ebserh-blue); 
+            padding: 15px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 5px solid var(--ebserh-green); 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .brand-badge {
+            display: inline-block;
+            background: var(--ebserh-green);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .relogio { 
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            color: var(--ebserh-yellow); 
+            background: rgba(0,0,0,0.2);
+            padding: 8px 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
 
         .main-content { flex: 1; display: flex; overflow: hidden; }
         
-        .chamada-foco { flex: 3; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); transition: all 0.5s ease; position: relative; padding: 20px; text-align: center; }
+        .chamada-foco { 
+            flex: 3; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            background: radial-gradient(circle at center, #003865 0%, #001930 100%); 
+            transition: all 0.5s ease; 
+            position: relative; 
+            padding: 20px; 
+            text-align: center; 
+        }
                
         #senha-atual { 
-            font-size: clamp(3rem, 12vw, 15vw); 
+            font-size: clamp(3rem, 11vw, 14vw); 
             font-weight: 800; 
-            color: #fff; 
-            line-height: 1; 
+            color: #ffffff; 
+            line-height: 1.1; 
             width: 90%; 
             margin: 0 auto;
             transition: 0.3s; 
             word-wrap: break-word; 
             overflow-wrap: break-word;
             display: block; 
-            text-align: center;    
+            text-align: center;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
         
         #local-atual { 
-            font-size: clamp(2rem, 5vw, 6vw); 
-            color: var(--accent); 
-            font-weight: 700; 
+            font-size: clamp(2rem, 5vw, 5.5vw); 
+            color: var(--ebserh-yellow); 
+            font-weight: 800; 
             text-transform: uppercase; 
-            margin-top: 20px; 
+            margin-top: 25px; 
+            background: rgba(0,0,0,0.25);
+            padding: 10px 30px;
+            border-radius: 50px;
+            border: 2px solid var(--ebserh-green);
         }
 
         .modo-espera #senha-atual { 
-            font-size: clamp(2.5rem, 6vw, 7vw); 
-            color: var(--accent); 
-            opacity: 0.8; 
+            font-size: clamp(2.2rem, 5.5vw, 6.5vw); 
+            color: #94a3b8; 
+            opacity: 0.9; 
+            text-shadow: none;
         }
         .modo-espera #local-atual { display: none; }
-        .modo-espera #txt-status { font-size: 1.5rem; color: #64748b; margin-bottom: 20px; }
+        .modo-espera #txt-status { 
+            font-size: 1.3rem; 
+            color: var(--ebserh-green); 
+            margin-bottom: 20px; 
+            background: rgba(0, 168, 89, 0.15);
+            padding: 6px 18px;
+            border-radius: 20px;
+            border: 1px solid var(--ebserh-green);
+        }
 
-        .historico { flex: 1; background: rgba(0,0,0,0.3); padding: 30px; display: flex; flex-direction: column; gap: 15px; border-left: 1px solid rgba(255,255,255,0.1); }
-        .hist-title { font-size: 1.2rem; font-weight: 800; color: #64748b; margin-bottom: 10px; text-transform: uppercase; }
-        .hist-item { background: var(--card-bg); padding: 15px; border-radius: 18px; border-left: 6px solid var(--accent); animation: slideIn 0.5s ease; }
+        #txt-status {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--ebserh-green);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .historico { 
+            flex: 1; 
+            background: var(--card-bg); 
+            padding: 30px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            border-left: 3px solid rgba(0, 168, 89, 0.3); 
+        }
+        .hist-title { 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            color: #38bdf8; 
+            margin-bottom: 10px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hist-item { 
+            background: rgba(255, 255, 255, 0.05); 
+            padding: 16px 20px; 
+            border-radius: 18px; 
+            border-left: 6px solid var(--ebserh-green); 
+            animation: slideIn 0.5s ease; 
+            backdrop-filter: blur(5px);
+        }
         
-        @keyframes slideIn { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
 
-        footer { background: #e11d48; height: 60px; display: flex; align-items: center; position: relative; overflow: hidden; }
-        .marquee-text { display: inline-block; font-size: 1.8rem; font-weight: 800; color: white; white-space: nowrap; padding-left: 100%; animation: marquee 30s linear infinite; }
+        footer { 
+            background: var(--ebserh-green); 
+            height: 55px; 
+            display: flex; 
+            align-items: center; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
+        }
+        .marquee-text { 
+            display: inline-block; 
+            font-size: 1.6rem; 
+            font-weight: 800; 
+            color: white; 
+            white-space: nowrap; 
+            padding-left: 100%; 
+            animation: marquee 30s linear infinite; 
+        }
         @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
     </style>
 </head>
@@ -67,34 +213,35 @@
 
     <header>
         <div class="logo-area">
-            <h1 id="unidade-nome" style="margin:0">Hospital Dia</h1>
-            <p style="color:#94a3b8;margin:0; font-weight: 700;">HOSPITAL DIA - EBSERH</p>
+            <span class="brand-badge">EBSERH</span>
+            <h1 id="unidade-nome" style="margin:0; font-size:1.8rem; font-weight:800;">Hospital Dia</h1>
         </div>
         <div class="relogio" id="relogio">00:00:00</div>
     </header>
 
     <div class="main-content">
         <div class="chamada-foco" id="area-foco">
-            <div id="txt-status" style="font-weight: 800;">AGUARDE</div>
+            <div id="txt-status">PACIENTE</div>
             <div id="senha-atual">SINCRONIZANDO...</div>
             <div id="local-atual">---</div>
         </div>
 
         <div class="historico">
-            <div class="hist-title">Últimos Chamados</div>
+            <div class="hist-title">
+                <span>📋</span> Últimos Chamados
+            </div>
             <div id="lista-historico"></div>
         </div>
     </div>
 
-    <footer style="background: #e11d48; height: 60px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;">
-        <div class="marquee-text" id="marquee-txt">Bem-vindo(a)! Sua saúde é nossa prioridade. • Mantenha seus documentos em mãos • Atendimento prioritário para idosos e gestantes.</div>
-        <div style="position: absolute; right: 20px; bottom: 5px; font-size: 0.6rem; color: rgba(255,255,255,0.6); font-weight: 800; letter-spacing: 1px;">
-            DESENVOLVIDO POR LUCAS FREITAS GOMES © 2026
+    <footer>
+        <div class="marquee-text" id="marquee-txt">Bem-vindo(a)! Hospital Dia - EBSERH • Mantenha seus documentos com foto em mãos • Atendimento prioritário conforme legislação vigente.</div>
+        <div style="position: absolute; right: 20px; bottom: 4px; font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 800; letter-spacing: 1px;">
+            LUCAS FREITAS GOMES © 2026
         </div>
     </footer>
 
 <script>
-    // --- DESPERTADOR DE VOZES ---
     window.speechSynthesis.getVoices();
     if (speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
@@ -124,8 +271,8 @@
         "AGUARDE SEU NOME NA TELA",
         "ESTEJA COM O CARTÃO DO SUS E DOCUMENTO COM FOTO",
         "MANTENHA O SILÊNCIO NA RECEPÇÃO",
-        "Beba água! Hidratação é essencial para o corpo.",
-        "Combate à Dengue: Não deixe água parada no seu quintal."
+        "Beba água! Hidratação é essencial para a saúde.",
+        "Mantenha as vacinas em dia. Proteja você e sua família."
     ];
     let indexInfo = 0;
 
@@ -255,8 +402,8 @@
         if(historico.length > 5) historico.pop();
         document.getElementById('lista-historico').innerHTML = historico.map(h => `
             <div class="hist-item">
-                <b style="font-size:1.6rem;display:block;color:white">${h.senha}</b>
-                <small style="color:var(--accent);font-weight:800; text-transform:uppercase">${h.consultorio}</small>
+                <b style="font-size:1.4rem;display:block;color:white">${h.senha}</b>
+                <small style="color:var(--ebserh-yellow);font-weight:800; text-transform:uppercase">${h.consultorio}</small>
             </div>
         `).join('');
     }
