@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Atendimento - Hospital Dia EBSERH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --success: #10b981; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; }
+        
+        .card { background: white; width: 100%; max-width: 500px; padding: 35px; border-radius: 35px; box-shadow: 0 20px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); margin-top: 20px; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 500px; margin-bottom: 10px; }
+        .user-badge { background: white; padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        
+        .grid-salas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .btn-sala { padding: 20px; background: #f8fafc; border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; font-weight: 700; text-align: center; transition: 0.3s; }
+        .btn-sala:hover { border-color: var(--accent); color: var(--accent); background: #eff6ff; }
+
+        .input-paciente { 
+            width: 100%; padding: 20px; border-radius: 20px; border: 2px solid #f1f5f9; 
+            font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; 
+            outline: none; transition: 0.3s; text-transform: uppercase;
+            box-sizing: border-box; display: block;
+        }
+
+        .input-paciente:focus { 
+            border-color: var(--accent); 
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-chamar { width: 100%; padding: 22px; background: var(--primary); color: white; border: none; border-radius: 22px; font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-chamar:active { transform: scale(0.98); }
+        
+        #success-check { color: var(--success); display: none; align-items: center; gap: 5px; font-weight: 800; margin-top: 10px; animation: bounce 0.5s ease; }
+
+        .hist-title { font-size: 0.9rem; font-weight: 800; color: #94a3b8; margin: 30px 0 15px; letter-spacing: 1px; text-transform: uppercase; }
+        .hist-item { background: #f8fafc; padding: 15px 20px; border-radius: 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
+        .hist-info b { font-size: 1.1rem; color: var(--primary); display: block; }
+        .hist-info small { color: #64748b; }
+        .btn-rechamada { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+
+        .hidden { display: none !important; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+
+        footer { width: 100%; max-width: 500px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; margin-bottom: 20px; }
+        .signature { margin: 0; font-size: 0.7rem; color: #94a3b8; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-badge">
+            <span class="material-symbols-rounded" style="color:var(--accent)">account_circle</span>
+            <span id="prof-nome">Profissional</span>
+        </div>
+        <button onclick="location.href='index.html'" style="border:none; background:none; color:#ef4444; font-weight:800; cursor:pointer;">Sair</button>
+    </div>
+
+    <div class="card" id="step-salas">
+        <h2 style="margin:0; font-weight:800;">Onde você está?</h2>
+        <p style="color:#64748b; margin-top:5px;" id="unidade-label">Hospital Dia EBSERH</p>
+        <div class="grid-salas" id="lista-salas"></div>
+    </div>
+
+    <div class="card hidden" id="step-chamada">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <b id="sala-ativa" style="color:var(--accent); font-size:1.2rem;">SALA</b>
+            <a onclick="location.reload()" style="cursor:pointer; font-size:0.8rem; color:#94a3b8; font-weight:700;">Trocar sala</a>
+        </div>
+        
+        <input type="text" id="paciente" class="input-paciente" placeholder="NOME DO PACIENTE" autocomplete="off">
+        
+        <button class="btn-chamar" onclick="chamar()">
+            <span class="material-symbols-rounded">campaign</span>
+            CHAMAR AGORA
+        </button>
+
+        <div id="success-check">
+            <span class="material-symbols-rounded">check_circle</span> CHAMADO ENVIADO!
+        </div>
+
+        <div class="hist-title">Últimos chamados</div>
+        <div id="historico"></div>
+    </div>
+
+    <footer>
+        <p class="signature">
+            Tecnologia Integrada <span style="color: #3b82f6;">●</span> 
+            <span style="color: #0f172a;">Lucas Freitas Gomes</span> © 2026
+        </p>
+    </footer>
+
+<script>
+    const SALAS = {
+        "hd": { 
+            "Médica": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
+            "Médico": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
+            "Enfermeira": ["Triagem 01", "Triagem 02", "Acolhimento"], 
+            "Enfermeiro": ["Triagem 01", "Triagem 02", "Acolhimento"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação", "Procedimentos"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação", "Procedimentos"]            
+        },
+        "aero": { 
+            "Médica": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
+            "Médico": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"],
+            "Enfermeira": ["Triagem 01", "Triagem 02"],
+            "Enfermeiro": ["Triagem 01", "Triagem 02"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
+        },
+        "tira": { 
+            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
+            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
+            "Enfermeira": ["Triagem 01", "Triagem 02"], 
+            "Enfermeiro": ["Triagem 01", "Triagem 02"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]            
+        },
+        "leblon": { 
+            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
+            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8"], 
+            "Enfermeira": ["Triagem 01", "Triagem 02"], 
+            "Enfermeiro": ["Triagem 01", "Triagem 02"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]            
+        },
+        "uni": { 
+            "Médica": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8", "Consultório 9", "Consultório 10"], 
+            "Médico": ["Consultório 1", "Consultório 2", "Consultório 3", "Consultório 4", "Consultório 5", "Consultório 6", "Consultório 7", "Consultório 8", "Consultório 9", "Consultório 10"], 
+            "Enfermeira": ["Classificação de risco 01", "Classificação de risco 02"], 
+            "Enfermeiro": ["Classificação de risco 01", "Classificação de risco 02"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
+        },
+        "nb": { 
+            "Médica": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
+            "Médico": ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], 
+            "Enfermeira": ["Triagem 01", "Triagem 02"], 
+            "Enfermeiro": ["Triagem 01", "Triagem 02"],
+            "Técnico de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"],
+            "Técnica de Enf.": ["Triagem 01", "Triagem 02", "Reidratação", "Medicação"]
+        }
+    };
+
+    if(sessionStorage.getItem('logado') !== 'true') window.location.href="index.html";
+    
+    const uID = sessionStorage.getItem('u_id') || 'hd';
+    const uNome = sessionStorage.getItem('u_nome');
+    const pNome = sessionStorage.getItem('p_nome');
+    const pCargo = sessionStorage.getItem('p_cargo');
+
+    document.getElementById('prof-nome').innerText = pNome;
+    document.getElementById('unidade-label').innerText = uNome || "Hospital Dia EBSERH";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyDCTpjqpW5YVocJUAyEp_09wczZ7Hacsg0", 
+        authDomain: "hospital-dia-936aa.firebaseapp.com",
+        databaseURL: "https://hospital-dia-936aa-default-rtdb.firebaseio.com",
+        projectId: "hospital-dia-936aa",
+        storageBucket: "hospital-dia-936aa.firebasestorage.app",
+        messagingSenderId: "286443531747",
+        appId: "1:286443531747:web:1e8659b12f1c36f5c104d6",
+        measurementId: "G-3CZ3Q0F1HX"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let salaSelecionada = "";
+    let hist = [];
+
+    const salasDaUnidade = SALAS[uID] ? SALAS[uID][pCargo] : ["Consultório 01", "Consultório 02", "Triagem 01", "Procedimentos"];
+    document.getElementById('lista-salas').innerHTML = salasDaUnidade.map(s => 
+        `<div class="btn-sala" onclick="selecionarSala('${s}')">${s}</div>`
+    ).join('');
+
+    function selecionarSala(s) {
+        salaSelecionada = s;
+        document.getElementById('sala-ativa').innerText = s;
+        document.getElementById('step-salas').classList.add('hidden');
+        document.getElementById('step-chamada').classList.remove('hidden');
+    }
+
+    function chamar(nomeRechamar = null) {
+        const input = document.getElementById('paciente');
+        const nome = nomeRechamar || input.value.trim().toUpperCase();
+        
+        if(!nome) return;
+
+        db.ref(uID + '/chamada').set({
+            senha: nome,
+            consultorio: salaSelecionada,
+            medico: pNome,
+            time: Date.now()
+        }).then(() => {
+            const check = document.getElementById('success-check');
+            check.style.display = 'flex';
+            setTimeout(() => { check.style.display = 'none'; }, 2000);
+
+            if(!nomeRechamar) {
+                hist.unshift({ nome, hora: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}) });
+                if(hist.length > 4) hist.pop();
+                input.value = "";
+                renderizarHistorico();
+            }
+        });
+    }
+
+    function renderizarHistorico() {
+        document.getElementById('historico').innerHTML = hist.map(i => `
+            <div class="hist-item">
+                <div class="hist-info">
+                    <b>${i.nome}</b>
+                    <small>${i.hora}</small>
+                </div>
+                <button class="btn-rechamada" onclick="chamar('${i.nome}')">RECHAMAR</button>
+            </div>
+        `).join('');
+    }
+</script>
+</body>
+</html>
